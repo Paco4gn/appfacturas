@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Restaurar datos - Tapia & López Abogados{% endblock %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">Restaurar datos</h1>
+    <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline-secondary">Volver</a>
+  </div>
+  <div class="alert alert-warning">
+    Cargar un respaldo eliminará la información actual y la reemplazará por la del archivo. Asegúrate de contar con un respaldo actualizado antes de continuar.
+  </div>
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data">
+        <div class="mb-3">
+          <label class="form-label">Archivo de respaldo (.json)</label>
+          <input type="file" name="backup_file" accept="application/json" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-danger">Restaurar información</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

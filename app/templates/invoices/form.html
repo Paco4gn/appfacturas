@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if invoice else 'Nueva' }} factura - Tapia & López Abogados{% endblock %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">{{ 'Editar' if invoice else 'Nueva' }} factura</h1>
+    <a href="{{ url_for('invoices.list_invoices') }}" class="btn btn-outline-secondary">Volver</a>
+  </div>
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <form method="post">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Número de factura</label>
+            <input type="text" name="invoice_number" class="form-control" value="{{ invoice.invoice_number if invoice else '' }}" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Cliente</label>
+            <select name="client_id" class="form-select" required>
+              <option value="" disabled selected>Selecciona un cliente</option>
+              {% for client in clients %}
+                <option value="{{ client.id }}" {% if invoice and invoice.client_id == client.id %}selected{% endif %}>{{ client.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Emisión</label>
+            <input type="date" name="issue_date" class="form-control" value="{{ invoice.issue_date.strftime('%Y-%m-%d') if invoice else '' }}" required>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Vencimiento</label>
+            <input type="date" name="due_date" class="form-control" value="{{ invoice.due_date.strftime('%Y-%m-%d') if invoice else '' }}" required>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Estado</label>
+            <select name="status" class="form-select">
+              <option value="pendiente" {% if invoice and invoice.status == 'pendiente' %}selected{% endif %}>Pendiente</option>
+              <option value="pagada" {% if invoice and invoice.status == 'pagada' %}selected{% endif %}>Pagada</option>
+              <option value="cancelada" {% if invoice and invoice.status == 'cancelada' %}selected{% endif %}>Cancelada</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Impuesto (%)</label>
+            <input type="number" step="0.01" name="tax_rate" class="form-control" value="{{ invoice.tax_rate if invoice else 0 }}">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Notas</label>
+            <textarea name="notes" class="form-control" rows="3">{{ invoice.notes if invoice else '' }}</textarea>
+          </div>
+        </div>
+
+        <hr class="my-4">
+
+        <h2 class="h5">Conceptos de la factura</h2>
+        <div class="table-responsive">
+          <table class="table" id="items-table">
+            <thead>
+              <tr>
+                <th>Descripción</th>
+                <th style="width: 120px;">Cantidad</th>
+                <th style="width: 160px;">Precio unitario</th>
+                <th style="width: 160px;">Total</th>
+                <th style="width: 60px;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% set items = invoice.items if invoice else [] %}
+              {% if items %}
+                {% for item in items %}
+                  <tr>
+                    <td><input type="text" name="item_description" class="form-control" value="{{ item.description }}" required></td>
+                    <td><input type="number" name="item_quantity" class="form-control" value="{{ item.quantity }}" min="1" required></td>
+                    <td><input type="number" name="item_unit_price" class="form-control" value="{{ '%.2f'|format(item.unit_price) }}" step="0.01" min="0" required></td>
+                    <td class="item-total">${{ '%.2f'|format(item.line_total) }}</td>
+                    <td><button type="button" class="btn btn-sm btn-outline-danger remove-item">×</button></td>
+                  </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td><input type="text" name="item_description" class="form-control" required></td>
+                  <td><input type="number" name="item_quantity" class="form-control" value="1" min="1" required></td>
+                  <td><input type="number" name="item_unit_price" class="form-control" value="0" step="0.01" min="0" required></td>
+                  <td class="item-total">$0.00</td>
+                  <td><button type="button" class="btn btn-sm btn-outline-danger remove-item">×</button></td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+        <button type="button" class="btn btn-outline-primary" id="add-item">Agregar concepto</button>
+
+        <div class="row justify-content-end mt-4">
+          <div class="col-md-4">
+            <ul class="list-group">
+              <li class="list-group-item d-flex justify-content-between">
+                <span>Subtotal</span>
+                <strong id="subtotal">$0.00</strong>
+              </li>
+              <li class="list-group-item d-flex justify-content-between">
+                <span>Impuesto</span>
+                <strong id="tax-amount">$0.00</strong>
+              </li>
+              <li class="list-group-item d-flex justify-content-between">
+                <span>Total</span>
+                <strong id="grand-total">$0.00</strong>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="mt-4 text-end">
+          <button type="submit" class="btn btn-primary">Guardar factura</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}
+{% block scripts %}
+  <script>
+    function updateTotals() {
+      const rows = document.querySelectorAll('#items-table tbody tr');
+      let subtotal = 0;
+      rows.forEach((row) => {
+        const qtyInput = row.querySelector('input[name="item_quantity"]');
+        const priceInput = row.querySelector('input[name="item_unit_price"]');
+        const totalCell = row.querySelector('.item-total');
+        const quantity = parseFloat(qtyInput.value || 0);
+        const price = parseFloat(priceInput.value || 0);
+        const lineTotal = quantity * price;
+        totalCell.textContent = `$${lineTotal.toFixed(2)}`;
+        subtotal += lineTotal;
+      });
+      const taxRate = parseFloat(document.querySelector('input[name="tax_rate"]').value || 0);
+      const taxAmount = subtotal * taxRate / 100;
+      const grandTotal = subtotal + taxAmount;
+      document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+      document.getElementById('tax-amount').textContent = `$${taxAmount.toFixed(2)}`;
+      document.getElementById('grand-total').textContent = `$${grandTotal.toFixed(2)}`;
+    }
+
+    document.getElementById('add-item').addEventListener('click', () => {
+      const tbody = document.querySelector('#items-table tbody');
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><input type="text" name="item_description" class="form-control" required></td>
+        <td><input type="number" name="item_quantity" class="form-control" value="1" min="1" required></td>
+        <td><input type="number" name="item_unit_price" class="form-control" value="0" step="0.01" min="0" required></td>
+        <td class="item-total">$0.00</td>
+        <td><button type="button" class="btn btn-sm btn-outline-danger remove-item">×</button></td>
+      `;
+      tbody.appendChild(row);
+      attachListeners(row);
+      updateTotals();
+    });
+
+    function attachListeners(row) {
+      row.querySelectorAll('input').forEach((input) => {
+        input.addEventListener('input', updateTotals);
+      });
+      row.querySelector('.remove-item').addEventListener('click', () => {
+        row.remove();
+        if (document.querySelectorAll('#items-table tbody tr').length === 0) {
+          document.getElementById('add-item').click();
+        }
+        updateTotals();
+      });
+    }
+
+    document.querySelectorAll('#items-table tbody tr').forEach((row) => attachListeners(row));
+    document.querySelector('input[name="tax_rate"]').addEventListener('input', updateTotals);
+    updateTotals();
+  </script>
+{% endblock %}
