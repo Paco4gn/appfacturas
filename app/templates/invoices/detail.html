@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Factura {{ invoice.invoice_number }} - Tapia & López Abogados{% endblock %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3">Factura {{ invoice.invoice_number }}</h1>
+      <p class="text-muted mb-0">Emitida por {{ invoice.user.username }} para {{ invoice.client.name }}</p>
+    </div>
+    <div>
+      <a href="{{ url_for('invoices.edit_invoice', invoice_id=invoice.id) }}" class="btn btn-outline-primary">Editar</a>
+      <a href="{{ url_for('invoices.list_invoices') }}" class="btn btn-outline-secondary">Volver</a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-header">Datos del cliente</div>
+        <div class="card-body">
+          <p class="mb-1"><strong>Nombre:</strong> {{ invoice.client.name }}</p>
+          <p class="mb-1"><strong>Identificación fiscal:</strong> {{ invoice.client.tax_id }}</p>
+          <p class="mb-1"><strong>Correo:</strong> {{ invoice.client.email }}</p>
+          <p class="mb-0"><strong>Teléfono:</strong> {{ invoice.client.phone or 'No proporcionado' }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-header">Detalles</div>
+        <div class="card-body">
+          <p class="mb-1"><strong>Estado:</strong> {{ invoice.status|capitalize }}</p>
+          <p class="mb-1"><strong>Fecha de emisión:</strong> {{ invoice.issue_date.strftime('%d/%m/%Y') }}</p>
+          <p class="mb-1"><strong>Fecha de vencimiento:</strong> {{ invoice.due_date.strftime('%d/%m/%Y') }}</p>
+          <p class="mb-0"><strong>Notas:</strong> {{ invoice.notes or 'Sin notas adicionales' }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mt-4">
+    <div class="card-header">Conceptos</div>
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead>
+          <tr>
+            <th>Descripción</th>
+            <th>Cantidad</th>
+            <th>Precio unitario</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in invoice.items %}
+            <tr>
+              <td>{{ item.description }}</td>
+              <td>{{ item.quantity }}</td>
+              <td>${{ '%.2f'|format(item.unit_price) }}</td>
+              <td>${{ '%.2f'|format(item.line_total) }}</td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="4" class="text-center text-muted">No se registraron conceptos en esta factura</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="row justify-content-end mt-4">
+    <div class="col-md-4">
+      <ul class="list-group">
+        <li class="list-group-item d-flex justify-content-between"><span>Subtotal</span><strong>${{ '%.2f'|format(invoice.subtotal) }}</strong></li>
+        <li class="list-group-item d-flex justify-content-between"><span>Impuesto ({{ invoice.tax_rate }}%)</span><strong>${{ '%.2f'|format(invoice.subtotal * invoice.tax_rate / 100) }}</strong></li>
+        <li class="list-group-item d-flex justify-content-between"><span>Total</span><strong>${{ '%.2f'|format(invoice.total) }}</strong></li>
+      </ul>
+    </div>
+  </div>
+{% endblock %}

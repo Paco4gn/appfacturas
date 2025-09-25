@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if client else 'Nuevo' }} cliente - Tapia & López Abogados{% endblock %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">{{ 'Editar' if client else 'Nuevo' }} cliente</h1>
+    <a href="{{ url_for('clients.list_clients') }}" class="btn btn-outline-secondary">Volver</a>
+  </div>
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <form method="post">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Nombre completo</label>
+            <input type="text" name="name" class="form-control" value="{{ client.name if client else '' }}" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Identificación fiscal</label>
+            <input type="text" name="tax_id" class="form-control" value="{{ client.tax_id if client else '' }}" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Correo electrónico</label>
+            <input type="email" name="email" class="form-control" value="{{ client.email if client else '' }}" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Teléfono</label>
+            <input type="text" name="phone" class="form-control" value="{{ client.phone if client else '' }}">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Dirección</label>
+            <textarea name="address" class="form-control" rows="3">{{ client.address if client else '' }}</textarea>
+          </div>
+        </div>
+        <div class="mt-4 text-end">
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

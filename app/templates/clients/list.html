@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Clientes - Tapia & López Abogados{% endblock %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">Clientes</h1>
+    <a href="{{ url_for('clients.create_client') }}" class="btn btn-primary">Nuevo cliente</a>
+  </div>
+  <form class="row g-2 mb-3" method="get">
+    <div class="col-auto">
+      <input type="search" class="form-control" name="q" placeholder="Buscar cliente" value="{{ search or '' }}">
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-outline-secondary">Buscar</button>
+    </div>
+  </form>
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-striped mb-0">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Identificación fiscal</th>
+            <th>Correo</th>
+            <th>Teléfono</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for client in clients %}
+            <tr>
+              <td>{{ client.name }}</td>
+              <td>{{ client.tax_id }}</td>
+              <td>{{ client.email }}</td>
+              <td>{{ client.phone or '-' }}</td>
+              <td class="text-end">
+                <a href="{{ url_for('clients.edit_client', client_id=client.id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                <form action="{{ url_for('clients.delete_client', client_id=client.id) }}" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar cliente? Se eliminarán sus facturas asociadas.');">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="5" class="text-center text-muted">Aún no hay clientes registrados</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

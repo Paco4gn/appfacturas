@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}Panel principal - Tapia & López Abogados{% endblock %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3">Bienvenido {{ user.username }}</h1>
+      <p class="text-muted">Gestiona la facturación de tu despacho legal en un solo lugar.</p>
+    </div>
+    <a href="{{ url_for('invoices.create_invoice') }}" class="btn btn-success">Nueva factura</a>
+  </div>
+  <div class="row g-4">
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h2 class="h6 text-uppercase text-muted">Clientes registrados</h2>
+          <p class="display-6 mb-0">{{ clients_count }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h2 class="h6 text-uppercase text-muted">Facturas pendientes</h2>
+          <p class="display-6 mb-0">${{ '%.2f'|format(total_pending) }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h2 class="h6 text-uppercase text-muted">Facturas cobradas</h2>
+          <p class="display-6 mb-0">${{ '%.2f'|format(total_paid) }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span>Últimas facturas</span>
+      <a href="{{ url_for('invoices.list_invoices') }}" class="btn btn-sm btn-outline-primary">Ver todas</a>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Número</th>
+            <th>Cliente</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for invoice in invoices %}
+            <tr>
+              <td><a href="{{ url_for('invoices.view_invoice', invoice_id=invoice.id) }}">{{ invoice.invoice_number }}</a></td>
+              <td>{{ invoice.client.name }}</td>
+              <td>{{ invoice.issue_date.strftime('%d/%m/%Y') }}</td>
+              <td><span class="badge bg-{{ 'success' if invoice.status == 'pagada' else 'warning text-dark' }}">{{ invoice.status|capitalize }}</span></td>
+              <td>${{ '%.2f'|format(invoice.total) }}</td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="5" class="text-center text-muted">No hay facturas registradas</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
